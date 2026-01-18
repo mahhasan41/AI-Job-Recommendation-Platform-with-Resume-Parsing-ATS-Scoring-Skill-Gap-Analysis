@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Register - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-user-plus fa-3x mb-3"></i>
+            <h2>Create Account</h2>
+            <p>Join AI Job Finder today</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="mb-3">
+                <label for="name" class="form-label">
+                    <i class="fas fa-user"></i> Full Name
+                </label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="fas fa-envelope"></i> Email Address
+                </label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                <small class="form-text text-muted">Minimum 6 characters</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">
+                    <i class="fas fa-lock"></i> Confirm Password
+                </label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                <i class="fas fa-user-plus"></i> Register
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

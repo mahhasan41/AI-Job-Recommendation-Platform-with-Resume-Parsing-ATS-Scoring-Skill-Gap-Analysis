@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}My Resume - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-file-alt"></i> My Resume</h1>
+        <p class="text-muted">Build your profile by uploading a resume or entering details manually</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" 
+                                data-bs-target="#upload" type="button" role="tab">
+                                <i class="fas fa-upload"></i> Upload Resume (Quick)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="manual-tab" data-bs-toggle="tab" 
+                                data-bs-target="#manual" type="button" role="tab">
+                                <i class="fas fa-edit"></i> Enter Manually
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="profileTabContent">
+                        <!-- Upload Resume Tab -->
+                        <div class="tab-pane fade show active" id="upload" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mx-auto">
+                                    <div class="text-center mb-4">
+                                        <i class="fas fa-file-upload fa-4x text-primary mb-3"></i>
+                                        <h4>Upload Your Resume</h4>
+                                        <p class="text-muted">AI will automatically extract your skills, education, and experience</p>
+                                    </div>
+                                    
+                                    <form method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data">
+                                        <div class="mb-3">
+                                            <label for="resume" class="form-label">Choose Resume File</label>
+                                            <input type="file" class="form-control form-control-lg" id="resume" name="resume" 
+                                                accept=".pdf,.doc,.docx" required>
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i> Supported formats: PDF, DOC, DOCX (Max 16MB)
+                                            </small>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-success btn-lg w-100">
+                                            <i class="fas fa-upload"></i> Upload & Parse Resume
+                                        </button>
+                                    </form>
+                                    
+                                    {% if profile and profile.resume_path %}
+                                        <div class="alert alert-success mt-4">
+                                            <i class="fas fa-check-circle"></i> Resume uploaded and parsed successfully!
+                                            <br><small>Switch to "Enter Manually" tab to edit extracted information.</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Entry Tab -->
+                        <div class="tab-pane fade" id="manual" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-10 mx-auto">
+                                    <form method="POST" action="{{ url_for('update_profile') }}">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="education" class="form-label">
+                                                    <i class="fas fa-graduation-cap"></i> Education
+                                                </label>
+                                                <textarea class="form-control" id="education" name="education" rows="4"
+                                                    placeholder="e.g., Bachelor of Science in Computer Science, XYZ University, 2020">{{ profile.education if profile else '' }}</textarea>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <label for="location" class="form-label">
+                                                    <i class="fas fa-map-marker-alt"></i> Location
+                                                </label>
+                                                <input type="text" class="form-control" id="location" name="location"
+                                                    value="{{ profile.location if profile else '' }}"
+                                                    placeholder="e.g., New York, US">
+                                                <small class="form-text text-muted">Helps match you with local jobs</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="skills" class="form-label">
+                                                <i class="fas fa-tools"></i> Skills (comma-separated)
+                                            </label>
+                                            <textarea class="form-control" id="skills" name="skills" rows="3"
+                                                placeholder="e.g., Python, JavaScript, React, SQL, Machine Learning, Docker">{{ profile.skills if profile else '' }}</textarea>
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-lightbulb"></i> Add as many relevant skills as possible for better job matching
+                                            </small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="experience" class="form-label">
+                                                <i class="fas fa-briefcase"></i> Work Experience
+                                            </label>
+                                            <textarea class="form-control" id="experience" name="experience" rows="6"
+                                                placeholder="Describe your work experience, projects, and accomplishments...">{{ profile.experience if profile else '' }}</textarea>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-save"></i> Save Changes
+                                            </button>
+                                            <button type="reset" class="btn btn-outline-secondary btn-lg">
+                                                <i class="fas fa-undo"></i> Reset
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display Parsed Skills -->
+    {% if skills_list %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-check-circle"></i> Extracted Skills</h5>
+                </div>
+                <div class="card-body">
+                    <div class="skill-tags">
+                        {% for skill in skills_list %}
+                            <span class="badge bg-primary skill-badge">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

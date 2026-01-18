@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Jobs - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-bookmark"></i> Saved Jobs</h1>
+        <p class="text-muted">Your bookmarked job opportunities</p>
+    </div>
+
+    {% if saved_jobs %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> You have <strong>{{ saved_jobs|length }}</strong> saved job(s)
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for job in saved_jobs %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ job.title }}</h5>
+                    {% if job.fit_percentage > 0 %}
+                    <span class="badge bg-success">{{ job.fit_percentage }}% Match</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3 text-muted">
+                        <i class="fas fa-building"></i> {{ job.company }}
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <p class="mb-2">
+                            <i class="fas fa-map-marker-alt text-primary"></i> 
+                            <strong>Location:</strong> {{ job.location }}
+                        </p>
+                        
+                        {% if job.salary_min or job.salary_max %}
+                        <p class="mb-2">
+                            <i class="fas fa-dollar-sign text-success"></i> 
+                            <strong>Salary:</strong> 
+                            {% if job.salary_min %}${{ "{:,.0f}".format(job.salary_min) }}{% endif %}
+                            {% if job.salary_min and job.salary_max %} - {% endif %}
+                            {% if job.salary_max %}${{ "{:,.0f}".format(job.salary_max) }}{% endif %}
+                        </p>
+                        {% endif %}
+                        
+                        {% if job.category %}
+                        <p class="mb-2">
+                            <i class="fas fa-tag text-info"></i> 
+                            <strong>Category:</strong> {{ job.category }}
+                        </p>
+                        {% endif %}
+                        
+                        <p class="mb-2">
+                            <i class="fas fa-clock text-muted"></i> 
+                            <strong>Saved:</strong> {{ job.saved_at.strftime('%B %d, %Y') }}
+                        </p>
+                    </div>
+                    
+                    <div class="job-description mb-3">
+                        <strong>Description:</strong>
+                        <p class="text-muted small mt-2" style="max-height: 100px; overflow: hidden;">
+                            {{ job.description[:300] }}{% if job.description|length > 300 %}...{% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer d-flex gap-2">
+                    <a href="{{ job.url }}" target="_blank" class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="fas fa-external-link-alt"></i> View Job
+                    </a>
+                    <form method="POST" action="{{ url_for('unsave_job', job_id=job.job_id) }}" class="flex-grow-1"
+                          onsubmit="return confirm('Remove this job from your saved list?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-bookmark fa-4x text-muted mb-4"></i>
+                    <h3>No Saved Jobs Yet</h3>
+                    <p class="text-muted mb-4">
+                        Start finding jobs and save the ones you're interested in for easy access later.
+                    </p>
+                    <a href="{{ url_for('find_jobs') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search"></i> Find Jobs Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s;
+    border: 1px solid #dee2e6;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.job-description {
+    font-size: 0.9rem;
+}
+
+.card-footer {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

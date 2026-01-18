@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-home"></i> Dashboard</h1>
+        <p class="text-muted">Welcome back, {{ session.user_name }}!</p>
+    </div>
+
+    <div class="row">
+        <!-- Quick Stats -->
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Find Jobs</h3>
+                    <p>Discover opportunities</p>
+                    <a href="{{ url_for('find_jobs') }}" class="btn btn-sm btn-primary">Explore</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-bookmark"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Saved Jobs</h3>
+                    <p>Your bookmarks</p>
+                    <a href="{{ url_for('saved_jobs') }}" class="btn btn-sm btn-success">View</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon orange">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>ATS Score</h3>
+                    <p>Resume analysis</p>
+                    <a href="{{ url_for('ats_score') }}" class="btn btn-sm btn-info">Check</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Analytics</h3>
+                    <p>View insights</p>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-sm btn-warning">View</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>My Profile</h3>
+                    <p>View account info</p>
+                    <a href="{{ url_for('profile') }}" class="btn btn-sm btn-secondary">View</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('find_jobs') }}" class="quick-action-btn">
+                                <i class="fas fa-search fa-2x"></i>
+                                <h6>Search Jobs</h6>
+                                <p>Find your next opportunity</p>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('resume') }}" class="quick-action-btn">
+                                <i class="fas fa-upload fa-2x"></i>
+                                <h6>Upload Resume</h6>
+                                <p>Let AI parse your resume</p>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('ats_score') }}" class="quick-action-btn">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                                <h6>ATS Score</h6>
+                                <p>Check resume compatibility</p>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('analytics') }}" class="quick-action-btn">
+                                <i class="fas fa-chart-bar fa-2x"></i>
+                                <h6>View Analytics</h6>
+                                <p>Market trends & insights</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

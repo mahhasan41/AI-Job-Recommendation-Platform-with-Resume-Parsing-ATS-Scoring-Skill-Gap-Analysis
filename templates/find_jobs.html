@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Find Jobs - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-search"></i> Find Jobs</h1>
+        <p class="text-muted">Search for opportunities matching your profile</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('find_jobs') }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="job_title" class="form-label">
+                            <i class="fas fa-briefcase"></i> Job Title / Keywords
+                        </label>
+                        <input type="text" class="form-control" id="job_title" name="job_title"
+                            placeholder="e.g., Software Engineer, Data Scientist...">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="location" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Location
+                        </label>
+                        <select class="form-select" id="location" name="location">
+                            <option value="us" selected>United States</option>
+                            <option value="gb">United Kingdom</option>
+                            <option value="au">Australia</option>
+                            <option value="ca">Canada</option>
+                            <option value="de">Germany</option>
+                            <option value="fr">France</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4">
+        <i class="fas fa-info-circle"></i> 
+        <strong>Tip:</strong> Make sure your profile is complete for the best AI-powered job recommendations!
+        <a href="{{ url_for('profile') }}" class="alert-link">Update Profile</a>
+    </div>
+</div>
+{% endblock %}
+

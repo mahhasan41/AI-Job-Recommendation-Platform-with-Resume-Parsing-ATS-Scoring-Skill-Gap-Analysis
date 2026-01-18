@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Job Results - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-list"></i> Job Search Results</h1>
+        <p class="text-muted">Found {{ jobs|length }} jobs for "{{ job_title }}" in {{ location }}</p>
+    </div>
+
+    {% if recommendations %}
+    <div class="alert alert-success">
+        <i class="fas fa-star"></i> 
+        <strong>AI Recommendations:</strong> Based on your profile, here are your top matches ranked by relevance.
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <h3 class="mb-4"><i class="fas fa-bullseye"></i> Recommended Jobs</h3>
+            
+            {% for rec in recommendations %}
+            <div class="job-card mb-4">
+                <div class="job-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4>{{ rec.job.title }}</h4>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-building"></i> {{ rec.job.company }}
+                                <span class="ms-3"><i class="fas fa-map-marker-alt"></i> {{ rec.job.location }}</span>
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            {% set fit_score, label = rec.similarity_score * 100, "" %}
+                            {% if fit_score >= 80 %}
+                                {% set label = "Excellent Match" %}
+                            {% elif fit_score >= 60 %}
+                                {% set label = "Good Match" %}
+                            {% elif fit_score >= 40 %}
+                                {% set label = "Fair Match" %}
+                            {% else %}
+                                {% set label = "Below Average" %}
+                            {% endif %}
+                            <div class="match-score" style="background: {% if fit_score >= 80 %}green{% elif fit_score >= 60 %}orange{% else %}red{% endif %};">
+                                {{ "%.0f"|format(fit_score) }}% Match
+                            </div>
+                            <small class="text-muted">{{ label }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="job-body">
+                    <p>{{ rec.job.description[:300] }}...</p>
+                    
+                    {% if rec.job.salary_min or rec.job.salary_max %}
+                    <p class="mb-2">
+                        <strong><i class="fas fa-dollar-sign"></i> Salary:</strong>
+                        {% if rec.job.salary_min and rec.job.salary_max %}
+                            ${{ "%.0f"|format(rec.job.salary_min) }} - ${{ "%.0f"|format(rec.job.salary_max) }}
+                        {% elif rec.job.salary_min %}
+                            From ${{ "%.0f"|format(rec.job.salary_min) }}
+                        {% elif rec.job.salary_max %}
+                            Up to ${{ "%.0f"|format(rec.job.salary_max) }}
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    {% if rec.skill_gaps %}
+                    <div class="skill-gaps mt-3">
+                        <strong><i class="fas fa-exclamation-triangle"></i> Missing Skills:</strong>
+                        {% for skill in rec.skill_gaps[:5] %}
+                            <span class="badge bg-warning">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="job-footer">
+                    <a href="{{ rec.job.url }}" target="_blank" class="btn btn-primary btn-sm">
+                        <i class="fas fa-external-link-alt"></i> View Job
+                    </a>
+                    <button class="btn btn-secondary btn-sm save-job-btn" 
+                            data-job-id="{{ rec.job.job_id }}" 
+                            data-score="{{ rec.similarity_score }}">
+                        <i class="fas fa-bookmark"></i> Save Job
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> Match Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="similarityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if jobs and not recommendations %}
+    <h3 class="mb-4">All Jobs</h3>
+    {% for job in jobs[:20] %}
+    <div class="job-card mb-4">
+        <div class="job-header">
+            <h4>{{ job.title }}</h4>
+            <p class="text-muted mb-1">
+                <i class="fas fa-building"></i> {{ job.company }}
+                <span class="ms-3"><i class="fas fa-map-marker-alt"></i> {{ job.location }}</span>
+            </p>
+        </div>
+        <div class="job-body">
+            <p>{{ job.description[:300] }}...</p>
+        </div>
+        <div class="job-footer">
+            <a href="{{ job.url }}" target="_blank" class="btn btn-primary btn-sm">
+                <i class="fas fa-external-link-alt"></i> View Job
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+// Wait for DOM and Chart.js to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded!');
+        return;
+    }
+
+    // Save job functionality
+    document.querySelectorAll('.save-job-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const jobId = this.getAttribute('data-job-id');
+            const score = this.getAttribute('data-score');
+            
+            fetch('{{ url_for("save_job") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    job_id: jobId,
+                    similarity_score: score
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.innerHTML = '<i class="fas fa-check"></i> Saved';
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-success');
+                    this.disabled = true;
+                }
+            });
+        });
+    });
+
+    // Chart for similarity scores
+    {% if recommendations and recommendations|length > 0 %}
+    const similarityScores = {{ recommendations|map(attribute='similarity_score')|list|tojson }}.map(score => score * 100);
+    
+    if (similarityScores.length > 0) {
+        const ctx = document.getElementById('similarityChart');
+        if (ctx) {
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: similarityScores.map((_, i) => `Job ${i + 1}`),
+                    datasets: [{
+                        label: 'Match Score (%)',
+                        data: similarityScores,
+                        backgroundColor: similarityScores.map(score => 
+                            score >= 80 ? 'rgba(75, 192, 192, 0.6)' :
+                            score >= 60 ? 'rgba(255, 206, 86, 0.6)' :
+                            'rgba(255, 99, 132, 0.6)'
+                        ),
+                        borderColor: similarityScores.map(score => 
+                            score >= 80 ? 'rgba(75, 192, 192, 1)' :
+                            score >= 60 ? 'rgba(255, 206, 86, 1)' :
+                            'rgba(255, 99, 132, 1)'
+                        ),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Match: ' + context.parsed.y.toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}
+

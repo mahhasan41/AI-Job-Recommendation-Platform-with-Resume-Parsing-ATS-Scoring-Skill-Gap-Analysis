@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-chart-bar"></i> Analytics Dashboard</h1>
+        <p class="text-muted">Job market insights and trends based on {{ jobs_count }} analyzed jobs</p>
+    </div>
+
+    <!-- Top Row: Skill Demand and Salary Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Top Skill Demand</h5>
+                </div>
+                <div class="card-body" style="min-height: 350px;">
+                    <canvas id="skillChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> Salary Statistics</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    {% if chart_data.salary_stats %}
+                    <div class="salary-stats-grid w-100">
+                        <div class="salary-stat-item text-center mb-3">
+                            <div class="stat-icon-small bg-success-light mb-2">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h6 class="text-muted mb-1">Average Salary</h6>
+                            <h3 class="text-success fw-bold">${{ "{:,.0f}".format(chart_data.salary_stats.average) }}</h3>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 text-center">
+                                <p class="text-muted small mb-1">Minimum</p>
+                                <h5 class="text-primary">${{ "{:,.0f}".format(chart_data.salary_stats.min) }}</h5>
+                            </div>
+                            <div class="col-6 text-center">
+                                <p class="text-muted small mb-1">Maximum</p>
+                                <h5 class="text-danger">${{ "{:,.0f}".format(chart_data.salary_stats.max) }}</h5>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3 pt-3 border-top">
+                            <p class="text-muted small mb-1">Median</p>
+                            <h5 class="text-info">${{ "{:,.0f}".format(chart_data.salary_stats.median) }}</h5>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No salary data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row: Location and Category Distribution -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Job Distribution by Location</h5>
+                </div>
+                <div class="card-body" style="min-height: 350px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="locationChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-tag"></i> Jobs by Category</h5>
+                </div>
+                <div class="card-body" style="min-height: 350px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="categoryChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.salary-stats-grid {
+    padding: 10px;
+}
+
+.salary-stat-item {
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+}
+
+.stat-icon-small {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.bg-success-light {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.card-header.bg-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.card-header.bg-info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+}
+
+.card-header.bg-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+</style>
+
+<script>
+// Wait for Chart.js to load
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded!');
+        return;
+    }
+
+    // Debug: Log the data we received
+    console.log('Chart Data:', {{ chart_data|tojson }});
+
+// Skill Demand Chart
+{% if chart_data.skill_demand and chart_data.skill_demand|length > 0 %}
+const skillData = {{ chart_data.skill_demand|tojson }};
+const skillLabels = Object.keys(skillData).slice(0, 10);
+const skillValues = skillLabels.map(key => skillData[key]);
+
+console.log('Skill Labels:', skillLabels);
+console.log('Skill Values:', skillValues);
+
+if (skillLabels.length > 0) {
+    const skillCtx = document.getElementById('skillChart').getContext('2d');
+    new Chart(skillCtx, {
+        type: 'bar',
+        data: {
+            labels: skillLabels,
+            datasets: [{
+                label: 'Job Count',
+                data: skillValues,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+} else {
+    document.getElementById('skillChart').parentElement.innerHTML = '<p class="text-muted text-center py-5">No skill data found in job descriptions</p>';
+}
+{% else %}
+document.getElementById('skillChart').parentElement.innerHTML = '<p class="text-muted text-center py-5">No skill data available. Search for more jobs to see skill demand.</p>';
+{% endif %}
+
+// Location Distribution Chart
+{% if chart_data.location_distribution and chart_data.location_distribution|length > 0 %}
+const locationData = {{ chart_data.location_distribution|tojson }};
+const locationLabels = Object.keys(locationData).slice(0, 8);
+const locationValues = locationLabels.map(key => locationData[key]);
+
+console.log('Location Labels:', locationLabels);
+console.log('Location Values:', locationValues);
+
+if (locationLabels.length > 0) {
+    const locationCtx = document.getElementById('locationChart').getContext('2d');
+    new Chart(locationCtx, {
+        type: 'pie',
+        data: {
+            labels: locationLabels,
+            datasets: [{
+                label: 'Jobs',
+                data: locationValues,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)',
+                    'rgba(199, 199, 199, 0.6)',
+                    'rgba(83, 102, 255, 0.6)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+} else {
+    document.getElementById('locationChart').parentElement.innerHTML = '<p class="text-muted text-center py-5">No location data found</p>';
+}
+{% else %}
+document.getElementById('locationChart').parentElement.innerHTML = '<p class="text-muted text-center py-5">No location data available. Search for jobs in different locations.</p>';
+{% endif %}
+
+// Category Distribution Chart
+{% if chart_data.category_distribution and chart_data.category_distribution|length > 0 %}
+const categoryData = {{ chart_data.category_distribution|tojson }};
+const categoryLabels = Object.keys(categoryData).slice(0, 8);
+const categoryValues = categoryLabels.map(key => categoryData[key]);
+
+console.log('Category Labels:', categoryLabels);
+console.log('Category Values:', categoryValues);
+
+if (categoryLabels.length > 0) {
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                label: 'Jobs',
+                data: categoryValues,
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(255, 159, 64, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(199, 199, 199, 0.6)',
+                    'rgba(83, 102, 255, 0.6)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+} else {
+    document.getElementById('categoryChart').parentElement.innerHTML = '<p class="text-muted text-center py-5">No category data found</p>';
+}
+{% else %}
+document.getElementById('categoryChart').parentElement.innerHTML = '<p class="text-muted text-center py-5">No category data available. Search for more jobs to populate categories.</p>';
+{% endif %}
+
+}); // End of DOMContentLoaded
+</script>
+{% endblock %}
+

@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}ATS Score Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-line me-2"></i>ATS Score Analysis</h2>
+        <a href="{{ url_for('resume') }}" class="btn btn-outline-primary">
+            <i class="fas fa-edit me-1"></i>Improve Resume
+        </a>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ summary.average }}%</h3>
+                    <small>Average Score</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ summary.highest }}%</h3>
+                    <small>Best Match</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ summary.total_jobs }}</h3>
+                    <small>Jobs Analyzed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ summary.excellent_count }}</h3>
+                    <small>Excellent Matches (80%+)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Distribution Chart -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Score Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="scoreDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>What is ATS Score?</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>ATS (Applicant Tracking System) Score</strong> measures how well your resume matches job requirements.</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><span class="badge bg-success">80-100%</span> Excellent Match - Apply immediately!</li>
+                        <li class="mb-2"><span class="badge bg-warning">60-79%</span> Good Match - Strong candidate</li>
+                        <li class="mb-2"><span class="badge bg-info">40-59%</span> Fair Match - Consider improving resume</li>
+                        <li class="mb-2"><span class="badge bg-danger">0-39%</span> Needs Improvement</li>
+                    </ul>
+                    <hr>
+                    <p class="mb-0"><small><strong>Score Components:</strong></small></p>
+                    <ul class="small mb-0">
+                        <li>Keywords: 35%</li>
+                        <li>Skills: 35%</li>
+                        <li>Experience: 20%</li>
+                        <li>Education: 10%</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Job Matches -->
+    <div class="card shadow-sm">
+        <div class="card-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+            <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top 10 Job Matches</h5>
+        </div>
+        <div class="card-body">
+            {% if matches %}
+                {% for match in matches %}
+                <div class="card mb-3 border-{{ match.color }}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="card-title mb-2">
+                                    <a href="{{ match.url }}" target="_blank" class="text-decoration-none">
+                                        {{ match.job_title }}
+                                    </a>
+                                </h5>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-building me-1"></i>{{ match.company }}
+                                    <span class="ms-3"><i class="fas fa-map-marker-alt me-1"></i>{{ match.location }}</span>
+                                    {% if match.salary_min and match.salary_max %}
+                                    <span class="ms-3"><i class="fas fa-dollar-sign me-1"></i>${{ "{:,}".format(match.salary_min) }} - ${{ "{:,}".format(match.salary_max) }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="display-4 text-{{ match.color }} mb-0">{{ match.overall_score }}%</div>
+                                <span class="badge bg-{{ match.color }}">{{ match.interpretation }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Breakdown -->
+                        <div class="mt-3">
+                            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#details{{ loop.index }}" aria-expanded="false">
+                                <i class="fas fa-chevron-down me-1"></i>View Detailed Breakdown
+                            </button>
+                            
+                            <div class="collapse mt-3" id="details{{ loop.index }}">
+                                <div class="row">
+                                    <!-- Score Breakdown -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">Score Breakdown</h6>
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small>Keywords Match</small>
+                                                <small><strong>{{ "%.1f"|format(match.breakdown.keyword_match.percentage) }}%</strong></small>
+                                            </div>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-primary" role="progressbar" 
+                                                     style="width: {{ match.breakdown.keyword_match.percentage }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small>Skills Match</small>
+                                                <small><strong>{{ "%.1f"|format(match.breakdown.skills_match.percentage) }}%</strong></small>
+                                            </div>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                     style="width: {{ match.breakdown.skills_match.percentage }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small>Experience Match</small>
+                                                <small><strong>{{ "%.1f"|format(match.breakdown.experience_match.score) }}%</strong></small>
+                                            </div>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" 
+                                                     style="width: {{ match.breakdown.experience_match.score }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small>Education Match</small>
+                                                <small><strong>{{ "%.1f"|format(match.breakdown.education_match.score) }}%</strong></small>
+                                            </div>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-info" role="progressbar" 
+                                                     style="width: {{ match.breakdown.education_match.score }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Matched & Missing -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-success">✓ Your Strengths</h6>
+                                        {% if match.breakdown.skills_match.matched %}
+                                        <p class="small mb-2">
+                                            <strong>Matched Skills:</strong><br>
+                                            {% for skill in match.breakdown.skills_match.matched[:5] %}
+                                                <span class="badge bg-success me-1">{{ skill }}</span>
+                                            {% endfor %}
+                                        </p>
+                                        {% endif %}
+                                        
+                                        <h6 class="text-danger mt-3">✗ Areas to Improve</h6>
+                                        {% if match.breakdown.skills_match.missing %}
+                                        <p class="small mb-2">
+                                            <strong>Missing Skills:</strong><br>
+                                            {% for skill in match.breakdown.skills_match.missing[:5] %}
+                                                <span class="badge bg-danger me-1">{{ skill }}</span>
+                                            {% endfor %}
+                                        </p>
+                                        {% endif %}
+                                        
+                                        {% if match.breakdown.keyword_match.missing %}
+                                        <p class="small mb-0">
+                                            <strong>Missing Keywords:</strong><br>
+                                            {% for keyword in match.breakdown.keyword_match.missing[:5] %}
+                                                <span class="badge bg-warning text-dark me-1">{{ keyword }}</span>
+                                            {% endfor %}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Improvement Suggestions -->
+                                {% if match.suggestions %}
+                                <div class="alert alert-info mb-0">
+                                    <h6 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Improvement Suggestions</h6>
+                                    <ul class="mb-0 small">
+                                        {% for suggestion in match.suggestions %}
+                                        <li>{{ suggestion }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-muted">No job matches found. Please search for jobs first.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+
+    // Score Distribution Pie Chart
+    const ctx = document.getElementById('scoreDistributionChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellent (80%+)', 'Good (60-79%)', 'Fair (40-59%)', 'Poor (<40%)'],
+                datasets: [{
+                    data: [
+                        {{ summary.excellent_count }},
+                        {{ summary.good_count }},
+                        {{ summary.fair_count }},
+                        {{ summary.poor_count }}
+                    ],
+                    backgroundColor: [
+                        'rgba(25, 135, 84, 0.8)',   // Green
+                        'rgba(255, 193, 7, 0.8)',    // Yellow
+                        'rgba(13, 202, 240, 0.8)',   // Cyan
+                        'rgba(220, 53, 69, 0.8)'     // Red
+                    ],
+                    borderColor: [
+                        'rgba(25, 135, 84, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(13, 202, 240, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Job Match Quality Distribution'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} jobs (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.collapse {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+</style>
+{% endblock %}

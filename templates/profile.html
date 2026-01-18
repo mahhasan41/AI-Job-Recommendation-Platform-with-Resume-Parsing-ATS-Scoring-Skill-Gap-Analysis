@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - AI Job Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+        <p class="text-muted">View your account information and profile details</p>
+    </div>
+
+    <div class="row">
+        <!-- Account Information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">
+                            <i class="fas fa-id-badge text-primary"></i> Name:
+                        </div>
+                        <div class="col-md-8">
+                            {{ session.user_name }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">
+                            <i class="fas fa-envelope text-primary"></i> Email:
+                        </div>
+                        <div class="col-md-8">
+                            {{ session.user_email }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 fw-bold">
+                            <i class="fas fa-check-circle text-success"></i> Status:
+                        </div>
+                        <div class="col-md-8">
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> Profile Details</h5>
+                    <a href="{{ url_for('resume') }}" class="btn btn-sm btn-light">
+                        <i class="fas fa-edit"></i> Edit Resume
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if profile %}
+                        <!-- Education -->
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-graduation-cap"></i> Education
+                            </h6>
+                            <p class="ms-4">
+                                {{ profile.education if profile.education else 'Not provided' }}
+                            </p>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt"></i> Location
+                            </h6>
+                            <p class="ms-4">
+                                {{ profile.location if profile.location else 'Not provided' }}
+                            </p>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-tools"></i> Skills
+                            </h6>
+                            <div class="ms-4">
+                                {% if skills_list %}
+                                    <div class="skill-tags">
+                                        {% for skill in skills_list %}
+                                            <span class="badge bg-primary skill-badge me-1 mb-1">{{ skill }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No skills added yet</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Experience -->
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-briefcase"></i> Work Experience
+                            </h6>
+                            <p class="ms-4" style="white-space: pre-line;">
+                                {{ profile.experience if profile.experience else 'Not provided' }}
+                            </p>
+                        </div>
+
+                        <!-- Resume Status -->
+                        {% if profile.resume_path %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle"></i> Resume uploaded and parsed
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5>No Profile Information Yet</h5>
+                            <p class="text-muted">Upload your resume or enter your details manually to get started</p>
+                            <a href="{{ url_for('resume') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Profile
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="col-md-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('resume') }}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-edit"></i> Edit Resume
+                    </a>
+                    <a href="{{ url_for('find_jobs') }}" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-search"></i> Find Jobs
+                    </a>
+                    <a href="{{ url_for('analytics') }}" class="btn btn-info w-100">
+                        <i class="fas fa-chart-bar"></i> View Analytics
+                    </a>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Delete Account</h6>
+                    <p class="text-muted small mb-3">
+                        Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                    <form method="POST" action="{{ url_for('delete_profile') }}" 
+                          onsubmit="return confirm('⚠️ Are you absolutely sure?\n\nThis will permanently delete:\n- Your profile and resume\n- All saved jobs\n- Search history\n\nThis action cannot be undone!');">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-trash"></i> Delete Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display Parsed Skills -->
+    {% if skills_list %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-check-circle"></i> Extracted Skills</h5>
+                </div>
+                <div class="card-body">
+                    <div class="skill-tags">
+                        {% for skill in skills_list %}
+                            <span class="badge bg-primary skill-badge">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
