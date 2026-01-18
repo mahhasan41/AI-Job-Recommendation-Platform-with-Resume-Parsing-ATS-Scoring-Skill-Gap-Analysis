@@ -16,8 +16,8 @@ except ImportError:
 from database.db_config import DB_CONFIG
 
 # Adzuna API Configuration
-APP_ID = "13db5e2e"
-APP_KEY = "7627ce049a9510af7c6843498553d8ce"
+APP_ID = ""
+APP_KEY = ""
 BASE_URL = "https://api.adzuna.com/v1/api/jobs"
 
 
