@@ -1,1 +1,1 @@
-PS C:\Users\GLOBAL TECHNOLOGY\Desktop\DM Project> & "C:/Users/GLOBAL TECHNOLOGY/Desktop/DM Project/.venv/Scripts/python.exe" app.py
+PS C:\Users\GLOBAL TECHNOLOGY\Desktop\DM Project> & "C:/Users/DM Project/.venv/Scripts/python.exe" app.py
